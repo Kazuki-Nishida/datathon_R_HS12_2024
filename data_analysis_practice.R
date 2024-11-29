@@ -80,6 +80,24 @@ corrplot(correlation_matrix, method = "color", col = colorRampPalette(c("blue", 
 ######## EDA end ###########
 
 # ---- ユーティリティ関数定義 ----
+
+# linear regression summary function
+lm_result=function(x){
+  a=summary(x)
+  Coefficients=round(summary(x)$coefficient[,1],digits=2)
+  LowerCL=formatC(confint(x)[,1],digits=2, format = "f")
+  UpperCL=formatC(confint(x)[,2],digits=2, format = "f")
+  Confidence_Intervals=paste(LowerCL,UpperCL,sep=", ")
+  CI=paste(matrix("[",length(Confidence_Intervals)),Confidence_Intervals,matrix(rep("]",length(Confidence_Intervals))),sep="")
+  Pvalue_raw=round(summary(x)$coefficient[,4],digits=3)
+  P_value=ifelse(Pvalue_raw<0.001,"<0.001",Pvalue_raw)
+  result=cbind(Coefficients,CI,P_value)
+  colnames(result)=c("Coefficients","[95% CI]","     P")
+  table=noquote(result)
+  attr(table,"note")=paste(note=paste("Objective Variable: ",sub("\\s*\\~.*", "", as.character(x$call[2])),collapse=""))
+  return(table)
+}
+
 # Logistic regression summary function
 lresult = function(x) {
   Coefficients_decimal = formatC(summary(x)$coefficient[,1], digits = 2, format = "f")
@@ -123,6 +141,8 @@ fisher.test(table_ef_family)
 linear_model_ef <- lm(EF ~ Age + sex_male + BMI + Smoking + Diabetes + 
                         LDL + HDL + s_BloodPressure + FamilyHistory, data = df)
 summary(linear_model_ef)
+lm_result(linear_model_ef)
+write.csv(lm_result(linear_model_ef), "linear_result.csv")
 
 # ---- RQ5: EF_Outcomeを目的変数としたロジスティック回帰モデル ----
 # 目的: EF_Outcomeに影響を与える因子を探索する
@@ -130,6 +150,7 @@ logistic_model_ef_outcome <- glm(EF_Outcome ~ Age + sex_male + BMI + Smoking +
                                    Diabetes + LDL + HDL + s_BloodPressure + FamilyHistory, 
                                  family = binomial(link = "logit"), data = df)
 lresult(logistic_model_ef_outcome)
+write.csv(lresult(logistic_model_ef_outcome), "logistic_result.csv")
 
 # ---- 必要パッケージのインストール ----
 if (!require("pROC")) install.packages("pROC")
