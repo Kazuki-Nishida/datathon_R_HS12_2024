@@ -46,37 +46,7 @@ correlation_matrix <- cor(numeric_data)
 
 # 相関係数のヒートマップを描画
 corrplot(correlation_matrix, method = "color", col = colorRampPalette(c("blue", "white", "red"))(200), 
-         addCoef.col = "black", tl.cex = 0.8, number.cex = 0.7)# ---- 数値型変数のヒストグラム（例: Age） ----
-hist(df$Age, main = "Histogram of Age", xlab = "Age", col = "lightblue", border = "white")
-
-# ---- 箱ひげ図（例: BMI） ----
-boxplot(df$BMI, main = "Boxplot of BMI", ylab = "BMI", col = "pink")
-
-
-# 一括でヒストグラムを見る
-# ---- 必要パッケージのインストール（未インストールの場合のみ） ----
-if (!require("DataExplorer")) install.packages("DataExplorer")
-
-# ---- ライブラリ読み込み ----
-library(DataExplorer)
-
-# ---- 数値型変数のヒストグラム ----
-plot_histogram(df)  # すべての数値型変数のヒストグラムを一括で描画
-
-plot_boxplot(df, by = "sex_male")  # 性別に数値型変数の分布を確認
-
-# ---- 相関係数のヒートマップ（簡易版） ----
-if (!require("corrplot")) install.packages("corrplot")
-library(corrplot)
-
-# 数値型変数を抽出して相関係数行列を計算
-numeric_data <- df[, sapply(df, is.numeric)]
-correlation_matrix <- cor(numeric_data)
-
-# 相関係数のヒートマップを描画
-corrplot(correlation_matrix, method = "color", col = colorRampPalette(c("blue", "white", "red"))(200), 
          addCoef.col = "black", tl.cex = 0.8, number.cex = 0.7)
-
 ######## EDA end ###########
 
 # ---- ユーティリティ関数定義 ----
