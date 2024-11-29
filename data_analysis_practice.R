@@ -11,10 +11,73 @@ library(survminer)
 # ---- データcsvデータの読み込み----
 df=read.csv("simulated_data.csv")
 
+######## EDA ###########
 # ---- データ構造と基本情報の表示 ----
 dim(df)  # データの行数と列数
 str(df)  # 各変数の構造情報
 summary(df)  # 変数の要約統計
+names(df) # 変数一覧
+
+# ---- 数値型変数のヒストグラム（例: Age） ----
+hist(df$Age, main = "Histogram of Age", xlab = "Age", col = "lightblue", border = "white")
+
+# ---- 箱ひげ図（例: BMI） ----
+boxplot(df$BMI, main = "Boxplot of BMI", ylab = "BMI", col = "pink")
+
+# 一括でヒストグラムを見る
+# ---- 必要パッケージのインストール（未インストールの場合のみ） ----
+if (!require("DataExplorer")) install.packages("DataExplorer")
+
+# ---- ライブラリ読み込み ----
+library(DataExplorer)
+
+# ---- 数値型変数のヒストグラム ----
+plot_histogram(df)  # すべての数値型変数のヒストグラムを一括で描画
+
+plot_boxplot(df, by = "sex_male")  # 性別に数値型変数の分布を確認
+
+# ---- 相関係数のヒートマップ（簡易版） ----
+if (!require("corrplot")) install.packages("corrplot")
+library(corrplot)
+
+# 数値型変数を抽出して相関係数行列を計算
+numeric_data <- df[, sapply(df, is.numeric)]
+correlation_matrix <- cor(numeric_data)
+
+# 相関係数のヒートマップを描画
+corrplot(correlation_matrix, method = "color", col = colorRampPalette(c("blue", "white", "red"))(200), 
+         addCoef.col = "black", tl.cex = 0.8, number.cex = 0.7)# ---- 数値型変数のヒストグラム（例: Age） ----
+hist(df$Age, main = "Histogram of Age", xlab = "Age", col = "lightblue", border = "white")
+
+# ---- 箱ひげ図（例: BMI） ----
+boxplot(df$BMI, main = "Boxplot of BMI", ylab = "BMI", col = "pink")
+
+
+# 一括でヒストグラムを見る
+# ---- 必要パッケージのインストール（未インストールの場合のみ） ----
+if (!require("DataExplorer")) install.packages("DataExplorer")
+
+# ---- ライブラリ読み込み ----
+library(DataExplorer)
+
+# ---- 数値型変数のヒストグラム ----
+plot_histogram(df)  # すべての数値型変数のヒストグラムを一括で描画
+
+plot_boxplot(df, by = "sex_male")  # 性別に数値型変数の分布を確認
+
+# ---- 相関係数のヒートマップ（簡易版） ----
+if (!require("corrplot")) install.packages("corrplot")
+library(corrplot)
+
+# 数値型変数を抽出して相関係数行列を計算
+numeric_data <- df[, sapply(df, is.numeric)]
+correlation_matrix <- cor(numeric_data)
+
+# 相関係数のヒートマップを描画
+corrplot(correlation_matrix, method = "color", col = colorRampPalette(c("blue", "white", "red"))(200), 
+         addCoef.col = "black", tl.cex = 0.8, number.cex = 0.7)
+
+######## EDA end ###########
 
 # ---- ユーティリティ関数定義 ----
 # Logistic regression summary function
@@ -68,26 +131,85 @@ logistic_model_ef_outcome <- glm(EF_Outcome ~ Age + sex_male + BMI + Smoking +
                                  family = binomial(link = "logit"), data = df)
 lresult(logistic_model_ef_outcome)
 
-# ---- RQ6: ROC曲線とAUC ----
-# 目的: ロジスティック回帰モデルの予測精度を評価する
-roc_curve_ef <- roc(df$EF_Outcome, predict(logistic_model_ef_outcome, type = "response"))
-plot(roc_curve_ef, main = "ROC Curve for EF_Outcome Model")
-cat("AUC:", auc(roc_curve_ef), "\n")
+# ---- 必要パッケージのインストール ----
+if (!require("pROC")) install.packages("pROC")
+library(pROC)
 
-# ---- RQ7: EFとFactorXを含むモデルと含まないモデルの比較 ----
-# 目的: EFおよびFactorXを含むモデルの精度を評価し、モデル間で比較する
-logistic_model_with_ef_x <- glm(EF_Outcome ~ Age + sex_male + BMI + Smoking + 
-                                  Diabetes + LDL + HDL + s_BloodPressure + FamilyHistory + 
-                                  EF + FactorX, family = binomial(link = "logit"), data = df)
+# ---- EF_Outcomeを目的変数にしたロジスティック回帰モデル（FactorXなし）----
+logistic_model_without_factorx <- glm(
+  formula = EF_Outcome ~ Age + sex_male + BMI + Smoking + 
+    Diabetes + LDL + HDL + s_BloodPressure + FamilyHistory, 
+  family = binomial(link = "logit"), 
+  data = df
+)
 
-roc_curve_with_ef_x <- roc(df$EF_Outcome, predict(logistic_model_with_ef_x, type = "response"))
+# ---- EF_Outcomeを目的変数にしたロジスティック回帰モデル（FactorXあり）----
+logistic_model_with_factorx <- glm(
+  formula = EF_Outcome ~ Age + sex_male + BMI + Smoking + 
+    Diabetes + LDL + HDL + s_BloodPressure + FamilyHistory + FactorX, 
+  family = binomial(link = "logit"), 
+  data = df
+)
 
-plot(roc_curve_ef, col = "blue", main = "Comparison of ROC Curves")
-lines(roc_curve_with_ef_x, col = "red")
-legend("bottomright", legend = c("Without EF and FactorX", "With EF and FactorX"), col = c("blue", "red"), lty = 1)
+# ---- ROC曲線の計算 ----
+roc_without_factorx <- roc(df$EF_Outcome, predict(logistic_model_without_factorx, type = "response"))
+roc_with_factorx <- roc(df$EF_Outcome, predict(logistic_model_with_factorx, type = "response"))
 
-cat("AUC Without EF and FactorX:", auc(roc_curve_ef), "\n")
-cat("AUC With EF and FactorX:", auc(roc_curve_with_ef_x), "\n")
+# ---- ROC曲線の描画 ----
+plot(roc_without_factorx, col = "blue", main = "ROC Curve Comparison for EF_Outcome")
+lines(roc_with_factorx, col = "red")
+legend("bottomright", legend = c("Without FactorX", "With FactorX"), col = c("blue", "red"), lty = 1)
+
+# ---- AUCの計算 ----
+auc_without_factorx <- auc(roc_without_factorx)
+auc_with_factorx <- auc(roc_with_factorx)
+cat("AUC Without FactorX:", auc_without_factorx, "\n")
+cat("AUC With FactorX:", auc_with_factorx, "\n")
+
+# ---- DeLong検定 ----
+delong_test <- roc.test(roc_without_factorx, roc_with_factorx, method = "delong")
+cat("\n=== DeLong Test for AUC Comparison ===\n")
+print(delong_test)
+
+## 参考 ##
+
+# ---- EF_Outcomeを目的変数にしたロジスティック回帰モデル（Smokingあり）----
+logistic_model_with_smoking <- glm(
+  formula = EF_Outcome ~ Age + sex_male + BMI + Smoking + 
+    Diabetes + LDL + HDL + s_BloodPressure + FamilyHistory, 
+  family = binomial(link = "logit"), 
+  data = df
+)
+
+# ---- EF_Outcomeを目的変数にしたロジスティック回帰モデル（Smokingなし）----
+logistic_model_without_smoking <- glm(
+  formula = EF_Outcome ~ Age + sex_male + BMI + 
+    Diabetes + LDL + HDL + s_BloodPressure + FamilyHistory, 
+  family = binomial(link = "logit"), 
+  data = df
+)
+
+# ---- ROC曲線の計算 ----
+roc_with_smoking <- roc(df$EF_Outcome, predict(logistic_model_with_smoking, type = "response"))
+roc_without_smoking <- roc(df$EF_Outcome, predict(logistic_model_without_smoking, type = "response"))
+
+# ---- ROC曲線の描画 ----
+plot(roc_with_smoking, col = "blue", main = "ROC Curve Comparison for EF_Outcome (With/Without Smoking)")
+lines(roc_without_smoking, col = "red")
+legend("bottomright", legend = c("With Smoking", "Without Smoking"), col = c("blue", "red"), lty = 1)
+
+# ---- AUCの計算 ----
+auc_with_smoking <- auc(roc_with_smoking)
+auc_without_smoking <- auc(roc_without_smoking)
+cat("AUC With Smoking:", auc_with_smoking, "\n")
+cat("AUC Without Smoking:", auc_without_smoking, "\n")
+
+# ---- DeLong検定 ----
+delong_test_smoking <- roc.test(roc_with_smoking, roc_without_smoking, method = "delong")
+cat("\n=== DeLong Test for AUC Comparison (With/Without Smoking) ===\n")
+print(delong_test_smoking)
+
+
 
 # ---- RQ8: FactorXの有無でKaplan-Meierとログランク検定 ----
 # 目的: FactorXの有無による生存期間の差を評価
@@ -98,6 +220,18 @@ legend("topright", legend = c("FactorX = 0", "FactorX = 1"), col = c("blue", "re
 
 logrank_test <- survdiff(surv_object ~ FactorX, data = df)
 print(logrank_test)
+
+# ---- RQ8続き: 累積ハザードプロット（FactorXによる比較） ----
+# 累積ハザードの計算
+km_fit_cumhaz <- survfit(surv_object ~ FactorX, data = df, type = "fh")
+
+# 累積ハザードのプロット
+plot(
+  km_fit_cumhaz, fun = "cumhaz", col = c("blue", "red"), 
+  main = "Cumulative Hazard for FactorX", xlab = "Time (days)", ylab = "Cumulative Hazard"
+)
+legend("topleft", legend = c("FactorX = 0", "FactorX = 1"), col = c("blue", "red"), lty = 1)
+
 
 # ---- RQ9: Cox比例ハザードモデル ----
 # 目的: FactorXおよび他の因子が生存期間に及ぼす影響を評価
