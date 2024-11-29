@@ -108,10 +108,10 @@ cox_easy = function(x) {
 # 目的: EF_Outcomeが1である群と0である群で年齢に差があるかを検討
 t.test(df$Age ~ df$EF_Outcome)
 
-# ---- RQ2: EFと年齢の関係（散布図と相関係数） ----
-# 目的: EFと年齢の間に関連性があるかを調べる
-plot(df$Age, df$EF, main = "Scatterplot of Age vs EF", xlab = "Age", ylab = "EF")
-cor.test(df$Age, df$EF)
+# ---- RQ2: EFとLDLの関係（散布図と相関係数） ----
+# 目的: EFとLDLの間に関連性があるかを調べる
+plot(df$LDL, df$EF, main = "Scatterplot of LDL vs EF", xlab = "LDL", ylab = "EF", pch = 20)
+cor.test(df$LDL, df$EF)
 
 # ---- RQ3: EF_OutcomeとFamilyHistoryの関係（Fisher検定） ----
 # 目的: EF_OutcomeがFamilyHistoryと関連があるかを検討
