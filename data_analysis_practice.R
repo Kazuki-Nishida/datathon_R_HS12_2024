@@ -104,6 +104,7 @@ cor.test(df$LDL, df$EF)
 # ---- RQ3: EF_OutcomeとFamilyHistoryの関係（Fisher検定） ----
 # 目的: EF_OutcomeがFamilyHistoryと関連があるかを検討
 table_ef_family <- table(df$EF_Outcome, df$FamilyHistory)
+print(table_ef_family)
 fisher.test(table_ef_family)
 
 # ---- RQ4: EFを目的変数とした線形回帰モデル ----
@@ -142,6 +143,7 @@ logistic_model_with_factorx <- glm(
   data = df
 )
 
+# RQ6: ロジスティック回帰モデルの精度をROC曲線とAUCで評価する
 # ---- ROC曲線の計算 ----
 roc_without_factorx <- roc(df$EF_Outcome, predict(logistic_model_without_factorx, type = "response"))
 roc_with_factorx <- roc(df$EF_Outcome, predict(logistic_model_with_factorx, type = "response"))
